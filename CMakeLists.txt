@@ -164,26 +164,6 @@ function(add_yolo_executable name source)
 endfunction()
 
 # ============================================================================
-# Main Executables
-# ============================================================================
-add_yolo_executable(image_inference src/image_inference.cpp)
-add_yolo_executable(video_inference src/video_inference.cpp)
-add_yolo_executable(video_yolo26_all_tasks src/video_yolo26_all_tasks.cpp)
-add_yolo_executable(video_yolo26_seg_pose src/video_yolo26_seg_pose.cpp)
-add_yolo_executable(video_yoloe_seg src/video_yoloe_seg.cpp)
-add_yolo_executable(image_yoloe_seg src/image_yoloe_seg.cpp)
-add_yolo_executable(camera_inference src/camera_inference.cpp)
-add_yolo_executable(class_image_inference src/class_image_inference.cpp)
-add_yolo_executable(batch_image_inference src/batch_image_inference.cpp)
-
-# ============================================================================
-# Examples (optional)
-# ============================================================================
-if(BUILD_EXAMPLES)
-    add_subdirectory(examples)
-endif()
-
-# ============================================================================
 # Summary
 # ============================================================================
 message(STATUS "")
@@ -193,5 +173,15 @@ message(STATUS "  Build Type:    ${CMAKE_BUILD_TYPE}")
 message(STATUS "  C++ Standard:  ${CMAKE_CXX_STANDARD}")
 message(STATUS "  OpenCV:        ${OpenCV_VERSION}")
 message(STATUS "  ONNX Runtime:  ${ONNXRUNTIME_DIR}")
-message(STATUS "  Examples:      ${BUILD_EXAMPLES}")
 message(STATUS "")
+
+# ============================================================================
+# To Test Correctness - Build as Top Level
+# ============================================================================
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(PROJECT_IS_TOP_LEVEL ON)
+else()
+    set(PROJECT_IS_TOP_LEVEL OFF)
+endif()
+
+add_subdirectory(examples)
