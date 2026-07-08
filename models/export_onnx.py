@@ -1,23 +1,26 @@
 from ultralytics import YOLO
 from ultralytics import NAS
 
-# Load the YOLO model
-# model = YOLO("yolov5nu.pt")
-# model = YOLO("yolov6n.yaml")
-# model.train(data="coco8.yaml", epochs=50, imgsz=640)
-# model = YOLO("yolov7n.pt")
-# model = YOLO("yolov8n.pt")
-# model = YOLO("yolov9t.pt")
-# model = YOLO("yolov10n.pt")
-# model = YOLO("yolo11n.pt")
-# model = YOLO("yolo12n.pt")
-model = NAS("yolo_nas_s.pt")
+from argparse import ArgumentParser
 
-# Export the model to ONNX format with static batch size (default)
-# model.export(format="onnx")
+if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("-m", "--model", default="yolov8n.pt", type=str, help="Model to download")
+    parser.add_argument("-n", "--nas", help="Download NAS model instead of YOLO", action="store_true")
+    parser.add_argument("-s", "--static", help="Download static instead of dynamic", action="store_true")
+    args = parser.parse_args()
 
-# model = YOLO("yolo11n.pt")
-model.export(format="onnx", dynamic=True, opset=11)
+    if args.nas:
+        print("~~~ Download NAS model", args.model, "~~~")
+        model = NAS(args.model)
+
+
+    else:
+        print("~~~ Downloading YOLO model", args.model, "~~~")
+        model = YOLO(args.model)
+
+    print("~~~ Exporting model as", "static" if args.static else "dynamic", "~~~")
+    model.export(format="onnx", dynamic=not args.static, opset=11)
 
 # Example: Export with dynamic batch size for batch inference support
 # Uncomment the following lines to export a dynamic model
