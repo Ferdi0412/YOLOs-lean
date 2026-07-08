@@ -56,12 +56,16 @@ class YOLOOBBDetector : public OrtSessionBase {
 public:
     /// @brief Constructor
     /// @param modelPath Path to the ONNX model file
+    /// @param device Device/backend to load the ONNX model to
+    /// @param threads Number of threads for ONNX to use
     /// @param labelsPath Path to the class names file
-    /// @param useGPU Whether to use GPU for inference
+    /// @param cacheDir For TensorRT to cache graph for future sessions
     YOLOOBBDetector(const std::string& modelPath,
-                    const std::string& labelsPath,
-                    bool useGPU = false)
-        : OrtSessionBase(modelPath, useGPU) {
+                    const std::string& device     = "cpu",
+                    int threads                   = 0,
+                    const std::string& labelsPath = "",
+                    const std::string& cacheDir   = "")
+        : OrtSessionBase(modelPath, device, threads, cacheDir) {
         classNames_ = utils::getClassNames(labelsPath);
         classColors_ = drawing::generateColors(classNames_);
         

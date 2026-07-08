@@ -32,8 +32,8 @@
 #include "yolos/tasks/segmentation.hpp"
 #include "yolos/tasks/pose.hpp"
 #include "yolos/tasks/obb.hpp"
-#include "yolos/tasks/classification.hpp"
-#include "yolos/tasks/yoloe.hpp"
+// #include "yolos/tasks/classification.hpp"
+// #include "yolos/tasks/yoloe.hpp"
 
 // ============================================================================
 // Namespace Aliases for Convenience
@@ -58,12 +58,12 @@ using OBBResult = obb::OBBResult;
 using YOLOOBBDetector = obb::YOLOOBBDetector;
 
 // Classification task aliases
-using ClassificationResult = cls::ClassificationResult;
-using YOLOClassifier = cls::YOLOClassifier;
-using YOLO26Classifier = cls::YOLO26Classifier;
+// using ClassificationResult = cls::ClassificationResult;
+// using YOLOClassifier = cls::YOLOClassifier;
+// using YOLO26Classifier = cls::YOLO26Classifier;
 
 // YOLOE open-vocabulary task aliases
-using YOLOEDetector    = yoloe::YOLOEDetector;
-using YOLOESegDetector = yoloe::YOLOESegDetector;
+// using YOLOEDetector    = yoloe::YOLOEDetector;
+// using YOLOESegDetector = yoloe::YOLOESegDetector;
 
 } // namespace yolos

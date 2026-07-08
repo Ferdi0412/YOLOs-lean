@@ -53,12 +53,16 @@ class YOLOPoseDetector : public OrtSessionBase {
 public:
     /// @brief Constructor
     /// @param modelPath Path to the ONNX model file
-    /// @param labelsPath Path to the class names file (optional for pose)
-    /// @param useGPU Whether to use GPU for inference
+    /// @param device Device/backend to load the ONNX model to
+    /// @param threads Number of threads for ONNX to use
+    /// @param labelsPath Path to the class names file
+    /// @param cacheDir For TensorRT to cache graph for future sessions
     YOLOPoseDetector(const std::string& modelPath,
-                     const std::string& labelsPath = "",
-                     bool useGPU = false)
-        : OrtSessionBase(modelPath, useGPU) {
+                    const std::string& device     = "cpu",
+                    int threads                   = 0,
+                    const std::string& labelsPath = "",
+                    const std::string& cacheDir   = "")
+        : OrtSessionBase(modelPath, device, threads, cacheDir) {
         
         if (!labelsPath.empty()) {
             classNames_ = utils::getClassNames(labelsPath);

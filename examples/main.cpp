@@ -5,11 +5,23 @@
 #include <string>
 
 int main(int argc, char** argv) {
-    int cam = argc > 1 ? std::stoi(argv[1]) : 0;
+    int cam = 0;
+    std::string device = "cpu";
+
+    for ( int i = 0; i < argc; i++ ) {
+        try {
+            cam = std::stoi(argv[i]);
+        }
+        catch ( const std::exception& e ) {
+            device = argv[i];
+        }
+
+
+    }
 
     cv::VideoCapture cap(cam);
 
-    yolos::pose::YOLOPoseDetector detector("yolov8n-pose.onnx", "", true);
+    yolos::pose::YOLOPoseDetector detector("yolov8n-pose.onnx", device);
 
     while ( cap.isOpened() ) {
         cv::Mat frame;

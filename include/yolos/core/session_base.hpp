@@ -34,12 +34,13 @@ class OrtSessionBase {
 public:
     /// @brief Constructor - loads and initializes the ONNX model
     /// @param modelPath Path to the ONNX model file
-    /// @param useGPU Whether to use GPU (CUDA) for inference
+    /// @param device Can be "cpu", "gpu" (for CUDA) (same) or "tensorrt"
     /// @param numThreads Number of intra-op threads (0 = auto)
-    OrtSessionBase(const std::string& modelPath, bool useGPU = false, int numThreads = 0)
+    /// @param cacheDir For TensorRT to cache graph for future sessions
+    OrtSessionBase(const std::string& modelPath, const std::string device = "cpu", int numThreads = 0, const std::string& cacheDir = "")
         : env_(ORT_LOGGING_LEVEL_WARNING, "YOLOS") {
         
-        initSession(modelPath, useGPU, numThreads);
+        initSession(modelPath, device, numThreads, cacheDir);
     }
 
     virtual ~OrtSessionBase() = default;
@@ -130,7 +131,13 @@ protected:
     }
 
 private:
-    void initSession(const std::string& modelPath, bool useGPU, int numThreads) {
+    inline bool providerAvailable(const std::string& ort_name) {
+        std::vector<std::string> available = Ort::GetAvailableProviders();
+        auto it = std::find(available.begin(), available.end(), ort_name);
+        return it != available.end();
+    }
+
+    void initSession(const std::string& modelPath, const std::string& device, int numThreads, const std::string& cacheDir) {
         sessionOptions_ = Ort::SessionOptions();
 
         // Set thread count
@@ -138,22 +145,45 @@ private:
         sessionOptions_.SetIntraOpNumThreads(threads);
         sessionOptions_.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
-        // Configure execution provider
-        std::vector<std::string> availableProviders = Ort::GetAvailableProviders();
-        auto cudaIt = std::find(availableProviders.begin(), availableProviders.end(), "CUDAExecutionProvider");
+        device_ = "cpu";
 
-        if (useGPU && cudaIt != availableProviders.end()) {
-            OrtCUDAProviderOptions cudaOptions{};
-            sessionOptions_.AppendExecutionProvider_CUDA(cudaOptions);
-            device_ = "gpu";
-            std::cout << "[INFO] Inference device: GPU (CUDA)" << std::endl;
-        } else {
-            if (useGPU) {
-                std::cout << "[WARNING] GPU requested but CUDA not available. Falling back to CPU." << std::endl;
+        // Configure execution provider
+        if ( device == "gpu" ) {
+            if ( !providerAvailable("CUDAExecutionProvider") ) {
+                OrtCUDAProviderOptions cudaopts{};
+                sessionOptions_.AppendExecutionProvider_CUDA(cudaopts);
+                device_ = "gpu";
             }
-            device_ = "cpu";
-            std::cout << "[INFO] Inference device: CPU" << std::endl;
+            else {
+                std::cout << "[WARNING] gpu (cuda) is not available, falling back to CPU" << std::endl;
+            }
         }
+
+        else if ( device == "tensorrt" ) {
+            /// @warning
+            /// This may still crash, as ONNX has the dynamic library 
+            /// for connecting, but not using the TensorRT backend
+            if ( !providerAvailable("TensorRTExecutionProvider") ) {
+                OrtTensorRTProviderOptions trtopts{};
+
+                // Use defaults to suppress runtime warnings
+                trtopts.trt_max_partition_iterations = 1000;
+                trtopts.trt_min_subgraph_size = 1;
+                trtopts.trt_max_workspace_size = 1073741824;
+
+                if ( cacheDir.size() ) {
+                    trtopts.trt_engine_cache_enable = 1;
+                    trtopts.trt_engine_cache_path = cacheDir.c_str();
+                    trtopts.trt_fp16_enable = 0;
+                }
+
+                sessionOptions_.AppendExecutionProvider_TensorRT(trtopts);
+                device_ = "tensorrt";
+            }
+        }
+
+        else if ( device != "cpu" )
+            std::cout << "[WARNING] device '" << device << "' is not recognized, using CPU" << std::endl;
 
         // Load model
 #ifdef _WIN32

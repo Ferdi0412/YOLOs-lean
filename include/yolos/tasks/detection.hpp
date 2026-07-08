@@ -50,14 +50,18 @@ class YOLODetector : public OrtSessionBase {
 public:
     /// @brief Constructor
     /// @param modelPath Path to the ONNX model file
+    /// @param device Device/backend to load the ONNX model to
+    /// @param threads Number of threads for ONNX to use
     /// @param labelsPath Path to the class names file
-    /// @param useGPU Whether to use GPU for inference
+    /// @param cacheDir For TensorRT to cache graph for future sessions
     /// @param version YOLO version (Auto for runtime detection)
     YOLODetector(const std::string& modelPath,
-                 const std::string& labelsPath,
-                 bool useGPU = false,
-                 YOLOVersion version = YOLOVersion::Auto)
-        : OrtSessionBase(modelPath, useGPU),
+                    const std::string& device     = "cpu",
+                    int threads                   = 0,
+                    const std::string& labelsPath = "",
+                    const std::string& cacheDir   = "",
+                    YOLOVersion version = YOLOVersion::Auto)
+        : OrtSessionBase(modelPath, device, threads, cacheDir),
           version_(version) {
         classNames_ = utils::getClassNames(labelsPath);
         classColors_ = drawing::generateColors(classNames_);
@@ -455,43 +459,67 @@ protected:
 /// @brief YOLOv7 detector (forces V7 postprocessing)
 class YOLOv7Detector : public YOLODetector {
 public:
-    YOLOv7Detector(const std::string& modelPath, const std::string& labelsPath, bool useGPU = false)
-        : YOLODetector(modelPath, labelsPath, useGPU, YOLOVersion::V7) {}
+    YOLOv7Detector(const std::string& modelPath, 
+                   const std::string& device,
+                   int threads,
+                   const std::string& labelsPath, 
+                   const std::string& cacheDir)
+        : YOLODetector(modelPath, device, threads, labelsPath, cacheDir, YOLOVersion::V7) {}
 };
 
 /// @brief YOLOv8 detector (forces standard postprocessing)
 class YOLOv8Detector : public YOLODetector {
 public:
-    YOLOv8Detector(const std::string& modelPath, const std::string& labelsPath, bool useGPU = false)
-        : YOLODetector(modelPath, labelsPath, useGPU, YOLOVersion::V8) {}
+    YOLOv8Detector(const std::string& modelPath, 
+                   const std::string& device,
+                   int threads,
+                   const std::string& labelsPath, 
+                   const std::string& cacheDir)
+        : YOLODetector(modelPath, device, threads, labelsPath, cacheDir, YOLOVersion::V8) {}
 };
 
 /// @brief YOLOv10 detector (forces V10 end-to-end postprocessing)
 class YOLOv10Detector : public YOLODetector {
 public:
-    YOLOv10Detector(const std::string& modelPath, const std::string& labelsPath, bool useGPU = false)
-        : YOLODetector(modelPath, labelsPath, useGPU, YOLOVersion::V10) {}
+    YOLOv10Detector(const std::string& modelPath, 
+                    const std::string& device,
+                    int threads,
+                    const std::string& labelsPath, 
+                    const std::string& cacheDir)
+        : YOLODetector(modelPath, device, threads, labelsPath, cacheDir, YOLOVersion::V10) {}
 };
 
 /// @brief YOLOv11 detector (forces standard postprocessing)
 class YOLOv11Detector : public YOLODetector {
 public:
-    YOLOv11Detector(const std::string& modelPath, const std::string& labelsPath, bool useGPU = false)
-        : YOLODetector(modelPath, labelsPath, useGPU, YOLOVersion::V11) {}
+    YOLOv11Detector(const std::string& modelPath, 
+                    const std::string& device,
+                    int threads,
+                    const std::string& labelsPath, 
+                    const std::string& cacheDir)
+        : YOLODetector(modelPath, device, threads, labelsPath, cacheDir, YOLOVersion::V11) {}
 };
 
 /// @brief YOLO-NAS detector (forces NAS postprocessing)
 class YOLONASDetector : public YOLODetector {
 public:
-    YOLONASDetector(const std::string& modelPath, const std::string& labelsPath, bool useGPU = false)
-        : YOLODetector(modelPath, labelsPath, useGPU, YOLOVersion::NAS) {}
+    YOLONASDetector(const std::string& modelPath, 
+                    const std::string& device,
+                    int threads,
+                    const std::string& labelsPath, 
+                    const std::string& cacheDir)
+        : YOLODetector(modelPath, device, threads, labelsPath, cacheDir, YOLOVersion::NAS) {}
 };
 
 /// @brief YOLOv26 detector (forces V26 end-to-end postprocessing)
 class YOLO26Detector : public YOLODetector {
 public:
-    YOLO26Detector(const std::string& modelPath, const std::string& labelsPath, bool useGPU = false)
-        : YOLODetector(modelPath, labelsPath, useGPU, YOLOVersion::V26) {}
+    YOLO26Detector(const std::string& modelPath, 
+                   const std::string& device,
+                   int threads,
+                   const std::string& labelsPath, 
+                   const std::string& cacheDir)
+        : YOLODetector(modelPath, device, threads, labelsPath, cacheDir, YOLOVersion::V26) {}
 };
 
 // ============================================================================
@@ -504,25 +532,27 @@ public:
 /// @param version YOLO version (Auto for runtime detection)
 /// @param useGPU Whether to use GPU
 /// @return Unique pointer to detector
-inline std::unique_ptr<YOLODetector> createDetector(const std::string& modelPath,
-                                                    const std::string& labelsPath,
-                                                    YOLOVersion version = YOLOVersion::Auto,
-                                                    bool useGPU = false) {
+inline std::unique_ptr<YOLODetector> createDetector(const std::string& modelPath, 
+                                                    const std::string& device,
+                                                    YOLOVersion version           = YOLOVersion::Auto,
+                                                    int threads                   = 0,
+                                                    const std::string& labelsPath = "", 
+                                                    const std::string& cacheDir   = "") {
     switch (version) {
         case YOLOVersion::V7:
-            return std::make_unique<YOLOv7Detector>(modelPath, labelsPath, useGPU);
+            return std::make_unique<YOLOv7Detector>(modelPath, device, threads, labelsPath, cacheDir);
         case YOLOVersion::V8:
-            return std::make_unique<YOLOv8Detector>(modelPath, labelsPath, useGPU);
+            return std::make_unique<YOLOv8Detector>(modelPath, device, threads, labelsPath, cacheDir);
         case YOLOVersion::V10:
-            return std::make_unique<YOLOv10Detector>(modelPath, labelsPath, useGPU);
+            return std::make_unique<YOLOv10Detector>(modelPath, device, threads, labelsPath, cacheDir);
         case YOLOVersion::V11:
-            return std::make_unique<YOLOv11Detector>(modelPath, labelsPath, useGPU);
+            return std::make_unique<YOLOv11Detector>(modelPath, device, threads, labelsPath, cacheDir);
         case YOLOVersion::V26:
-            return std::make_unique<YOLO26Detector>(modelPath, labelsPath, useGPU);
+            return std::make_unique<YOLO26Detector>(modelPath, device, threads, labelsPath, cacheDir);
         case YOLOVersion::NAS:
-            return std::make_unique<YOLONASDetector>(modelPath, labelsPath, useGPU);
+            return std::make_unique<YOLONASDetector>(modelPath, device, threads, labelsPath, cacheDir);
         default:
-            return std::make_unique<YOLODetector>(modelPath, labelsPath, useGPU, YOLOVersion::Auto);
+            return std::make_unique<YOLODetector>(modelPath, device, threads, labelsPath, cacheDir, YOLOVersion::Auto);
     }
 }
 
