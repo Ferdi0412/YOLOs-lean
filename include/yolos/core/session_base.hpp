@@ -149,7 +149,7 @@ private:
 
         // Configure execution provider
         if ( device == "gpu" ) {
-            if ( !providerAvailable("CUDAExecutionProvider") ) {
+            if ( providerAvailable("CUDAExecutionProvider") ) {
                 OrtCUDAProviderOptions cudaopts{};
                 sessionOptions_.AppendExecutionProvider_CUDA(cudaopts);
                 device_ = "gpu";
@@ -163,7 +163,7 @@ private:
             /// @warning
             /// This may still crash, as ONNX has the dynamic library 
             /// for connecting, but not using the TensorRT backend
-            if ( !providerAvailable("TensorRTExecutionProvider") ) {
+            if ( providerAvailable("TensorRTExecutionProvider") ) {
                 OrtTensorRTProviderOptions trtopts{};
 
                 // Use defaults to suppress runtime warnings
@@ -179,6 +179,9 @@ private:
 
                 sessionOptions_.AppendExecutionProvider_TensorRT(trtopts);
                 device_ = "tensorrt";
+            }
+            else {
+                std::cout << "[WARNING] tensorrt is not available, falling back to CPU" << std::endl;
             }
         }
 
