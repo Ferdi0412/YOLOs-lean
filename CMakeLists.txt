@@ -125,43 +125,29 @@ endif()
 # ============================================================================
 # Helper Function
 # ============================================================================
-function(add_yolo_executable name source)
-    add_executable(${name} ${source})
-    target_include_directories(${name} PRIVATE 
-        "${CMAKE_CURRENT_SOURCE_DIR}/include"
-        "${ONNXRUNTIME_DIR}/include"    
-    )
-    target_link_libraries(${name} PRIVATE 
+add_library(yolos INTERFACE)
+add_library(yolos::yolos ALIAS yolos)
+
+target_include_directories(yolos
+    INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        "${CMAKE_SOURCE_DIR}/include"
+        "${ONNXRUNTIME_DIR}/include"
+)
+
+target_link_libraries(yolos
+    INTERFACE 
         ${OpenCV_LIBS}
         ${ONNXRUNTIME_LIB}
         Threads::Threads
-    )
-    
-    # Platform-specific runtime library handling
-    if(WIN32)
-        # Copy ONNX Runtime DLL to output directory
-        set(ONNXRUNTIME_DLL "${ONNXRUNTIME_DIR}/lib/onnxruntime.dll")
-        if(EXISTS "${ONNXRUNTIME_DLL}")
-            add_custom_command(TARGET ${name} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${ONNXRUNTIME_DLL}"
-                "$<TARGET_FILE_DIR:${name}>"
-            )
-        endif()
-    elseif(UNIX AND NOT APPLE)
-        # Set RPATH for runtime library discovery
-        set_target_properties(${name} PROPERTIES
-            BUILD_RPATH "${ONNXRUNTIME_DIR}/lib"
-            INSTALL_RPATH "${ONNXRUNTIME_DIR}/lib"
-        )
-    elseif(APPLE)
-        # Set RPATH for macOS
-        set_target_properties(${name} PROPERTIES
-            BUILD_RPATH "@executable_path;${ONNXRUNTIME_DIR}/lib"
-            INSTALL_RPATH "@executable_path;${ONNXRUNTIME_DIR}/lib"
-        )
-    endif()
-endfunction()
+)
+
+set_target_properties(yolos
+     PROPERTIES
+        BUILD_RPATH "${ONNXRUNTIME_DIR}/lib"
+        INSTALL_RPATH "${ONNXRUNTIME_DIR}/lib"
+)
 
 # ============================================================================
 # Summary

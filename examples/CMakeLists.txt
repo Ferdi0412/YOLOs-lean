@@ -1,1 +1,2 @@
-add_yolo_executable(main main.cpp)
+add_executable(main main.cpp)
+target_link_libraries(main PRIVATE yolos::yolos)
