@@ -164,10 +164,10 @@ message(STATUS "")
 # ============================================================================
 # To Test Correctness - Build as Top Level
 # ============================================================================
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    set(PROJECT_IS_TOP_LEVEL ON)
-else()
-    set(PROJECT_IS_TOP_LEVEL OFF)
-endif()
+# if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+#     set(PROJECT_IS_TOP_LEVEL ON)
+# else()
+#     set(PROJECT_IS_TOP_LEVEL OFF)
+# endif()
 
-add_subdirectory(examples)
+# add_subdirectory(examples)
